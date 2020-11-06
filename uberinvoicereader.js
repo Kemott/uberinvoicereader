@@ -3,7 +3,7 @@ const PdfReader = require('pdfreader');
 const map_tab = {
     header: 0,
     metadata: 1,
-    issued_by_as_bot: 2,
+    issued_by_for_bot: 2,
     issued_by_bot: 3,
     bot_first_slash: 4,
     bot_addr: 5,
@@ -71,6 +71,7 @@ module.exports =  (path, next) => {
     let i = 0;
     let tab = [];
     let result = {};
+    result.issued_by = {};
     result.client = {};
     result.seller = {};
     result.positions = [];
@@ -78,41 +79,57 @@ module.exports =  (path, next) => {
     let pdfReader = new PdfReader.PdfReader()
     pdfReader.parseFileItems(path, (err, item) => {
         if (!item) {
-            //console.log(tab[15]);
-            //console.log(tab[16]);
-            //console.log(tab[17]);
-            //console.log(tab[18]);
             //console.log(`Zakończono wczytywanie faktury: ${path}`);
-            result.issued_by_as_bot = tab[map_tab.issued_by_as_bot].text;
-            result.issued_by_bot = tab[map_tab.issued_by_bot].text;
-            result.issued_by_addr = tab[map_tab.bot_addr].text;
-            result.issued_by_vat = tab[map_tab.issued_by_vat].text;
-            result.issued_by_coc = tab[map_tab.bot_coc_number].text;
-            result.client.company_name = tab[map_tab.client_company_name].text;
-            result.client.street = tab[map_tab.client_street].text;
+            let txt = tab[map_tab.issued_by_for_bot].text;
+            txt.trim();
+            txt.replace(/ {2,}/g, ' ');
+            let splitted = txt.split(' ');
+            splitted.pop();
+            splitted.shift();
+            splitted.shift();
+            splitted.shift();
+            txt = splitted.join(' ');
+            result.issued_by.for = txt;
+
+            result.issued_by.name = tab[map_tab.issued_by_bot].text.trim();
+            result.issued_by.addr = tab[map_tab.bot_addr].text.trim();
+
+            txt = tab[map_tab.issued_by_vat].text.trim();
+            splitted = txt.split(' ');
+            result.issued_by.vat = splitted[1].trim();
+
+
+            result.issued_by.coc = tab[map_tab.bot_coc_number].text.trim();
+            result.client.company_name = tab[map_tab.client_company_name].text.trim();
+            result.client.street = tab[map_tab.client_street].text.trim();
             result.client.post_code = tab[map_tab.client_post_code_part_1].text + tab[map_tab.client_post_code_part_2].text;
-            result.client.country = tab[map_tab.client_country].text;
-            result.client.nip = tab[map_tab.client_nip].text;
-            result.seller.name = tab[map_tab.seller_name].text;
-            result.seller.street = tab[map_tab.seller_street].text;
+            result.client.post_code.trim();
+            result.client.city = tab[map_tab.client_city].text.trim();
+            result.client.country = tab[map_tab.client_country].text.trim();
+            result.client.nip = tab[map_tab.client_nip].text.trim();
+            result.seller.name = tab[map_tab.seller_name].text.trim();
+            result.seller.street = tab[map_tab.seller_street].text.trim();
             result.seller.post_code = tab[map_tab.seller_post_code_part_1].text + tab[map_tab.seller_post_code_part_2].text;
-            result.seller.city = tab[map_tab.seller_city].text;
-            result.seller.country = tab[map_tab.seller_country].text;
-            result.seller.nip = tab[map_tab.seller_nip].text;
-            result.invoice_number = tab[map_tab.invoice_number_part_1].text + tab[map_tab.invoice_number_part_2].text + tab[map_tab.invoice_number_part_3].text + tab[map_tab.invoice_number_part_4].text;
-            result.invoice_date = tab[map_tab.invoice_date].text;
-            position.lp = tab[map_tab.tab_lp].text;
-            position.sell_date = tab[map_tab.sell_date].text;
-            position.description = tab[map_tab.position_description_part_1].text + tab[map_tab.position_description_part_2].text + tab[map_tab.position_description_part_3].text;
-            position.amount = tab[map_tab.position_amount].text;
-            position.jm = tab[map_tab.position_jm].text;
-            position.vat = tab[map_tab.position_vat].text;
-            position.vat_amount = tab[map_tab.position_vat_amount].text;
-            position.netto = tab[map_tab.position_netto].text;
+            result.seller.post_code.trim();
+            result.seller.city = tab[map_tab.seller_city].text.trim();
+            result.seller.country = tab[map_tab.seller_country].text.trim();
+            result.seller.nip = tab[map_tab.seller_nip].text.trim();
+            result.invoice_number = tab[map_tab.invoice_number_part_1].text.trim() + tab[map_tab.invoice_number_part_2].text.trim() + tab[map_tab.invoice_number_part_3].text.trim() + tab[map_tab.invoice_number_part_4].text.trim();
+            result.invoice_number.trim();
+            result.invoice_date = tab[map_tab.invoice_date].text.trim();
+            position.lp = tab[map_tab.tab_lp].text.trim();
+            position.sell_date = tab[map_tab.sell_date].text.trim();
+            position.description = tab[map_tab.position_description_part_1].text + ' ' + tab[map_tab.position_description_part_2].text + tab[map_tab.position_description_part_3].text.substring(1);
+            position.description.trim();
+            position.amount = parseInt(tab[map_tab.position_amount].text.trim(), 10);
+            position.jm = tab[map_tab.position_jm].text.trim();
+            position.vat_percent = parseInt(tab[map_tab.position_vat].text.trim(), 10);
+            position.vat_amount = parseFloat(tab[map_tab.position_vat_amount].text.trim().replace(',','.'));
+            position.netto = parseFloat(tab[map_tab.position_netto].text.trim().replace(',','.'));
             result.positions.push(position);
-            result.after_ptu = tab[map_tab.after_ptu].text;
-            result.all_vat = tab[map_tab.all_vat].text;
-            result.brutto = tab[map_tab.brutto].text;
+            result.after_ptu = parseFloat(tab[map_tab.after_ptu].text.trim().replace(',','.'));
+            result.all_vat = parseFloat(tab[map_tab.all_vat].text.trim().replace(',','.'));
+            result.brutto = parseFloat(tab[map_tab.brutto].text.trim().replace(',','.'));
             next(result);
         } else {
             tab[i] = item;

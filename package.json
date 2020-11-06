@@ -4,7 +4,7 @@
   "description": "Module to create javascript object from Uber PDF invoice",
   "main": "uberinvoicereader.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "keywords": [
     "uber",
@@ -13,6 +13,7 @@
   "author": "Futuristic Tomasz Burzyński",
   "license": "MIT",
   "dependencies": {
+    "mocha": "^8.2.1",
     "pdfreader": "^1.2.7"
   }
 }
